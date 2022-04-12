@@ -1,0 +1,58 @@
+```
+仓库调拨
+stock_organization_out_id = 10001
+
+
+
+
+```
+
+```
+成品入库
+退供应商
+发货单
+换货单
+溢亏
+代销调拨
+代销退货
+经销退货
+仓库调拨
+退客处理
+```
+
+```
+SELECT '1,' AS id,1 AS CODE,'成品入库' AS NAME FROM DUAL 
+UNION ALL 
+
+SELECT '1' AS id,1 AS CODE,'成品入库' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '2' AS id,2 AS CODE,'退供应商' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '3' AS id,3 AS CODE,'发货单' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '4' AS id,4 AS CODE,'换货单' AS NAME FROM DUAL
+UNION ALL 
+SELECT '5' AS id,5 AS CODE,'溢亏' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '6' AS id,6 AS CODE,'代销调拨' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '7' AS id,7 AS CODE,'代销退货' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '8' AS id,8 AS CODE,'经销退货' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '9' AS id,9 AS CODE,'仓库调拨' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '10' AS id,10 AS CODE,'退客处理' AS NAME FROM DUAL 
+
+
+```
+
+```
+SELECT '1' AS id,1 AS CODE,'合计' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '2' AS id,2 AS CODE,'明细' AS NAME FROM DUAL 
+UNION ALL 
+SELECT '3' AS id,3 AS CODE,'编码' AS NAME FROM DUAL 
+
+```
+

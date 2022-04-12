@@ -1,0 +1,28 @@
+退客处理没数据
+
+加了 AND wms_stock_out_bill.business_type_id = 598903405221556317 就没有数据了
+
+仓库调拨没数据
+
+加了 AND stk_allocate_out_bill.stock_organization_out_id = 10001
+
+```
+       ''                                 AS in_qty,        -- 入库数量
+```
+
+```
+       ''                                 AS out_qty,        -- 出库数量
+```
+
+```
+	   '' AS stock_date,    -- 日期
+       '' AS workflow_no,   -- 交易号
+       '' AS bill_no,       -- 单据号码
+       '' AS customer_name, -- 客户/供应商名称
+       '' AS customer_name, -- 花号
+       '' AS coding,        -- 编码
+       '' AS gb_coding,     -- 国标码
+       '' AS out_qty,       -- 出库数量
+       '' AS in_qty         -- 入库数量
+```
+

@@ -1,0 +1,72 @@
+# 合计
+select ''                                            AS stock_date,   -- 日期
+       ''                                            AS workflow_no,  -- 交易号
+       ''                                            AS bill_no,      -- 单据号码
+       bas_supplier.code                             AS custmer_name, -- 客户/供应商名称
+       ''                                            AS style_color,  -- 花号
+       ''                                            AS coding,       -- 编码
+       ''                                            AS gb_coding,    -- 国标码
+       sum(trade_purchase_return_bill_goods.pur_qty) AS out_qty,      -- 出库数量
+       ''                                            AS in_qty        -- 入库数量
+from trade_purchase_return_bill
+         left join bas_supplier on trade_purchase_return_bill.supplier_id = bas_supplier.id
+         left join trade_purchase_return_bill_goods
+                   on trade_purchase_return_bill.id = trade_purchase_return_bill_goods.bill_id
+where trade_purchase_return_bill.delivery_status = 8
+  AND trade_purchase_return_bill.base_company_id = '10001'
+#   AND (trade_purchase_return_bill.stock_date >= '2022-03-20' AND trade_purchase_bill.stock_date <= '2022-03-31')
+#   AND bas_supplier.code LIKE ('') -- 供应商
+#   AND ('1' IN ('@queryType'))
+group by bas_supplier.code
+-- 客户/供应商名称
+
+# 明细
+select trade_purchase_return_bill.stock_date         AS stock_date,   -- 日期
+       trade_purchase_return_bill.workflow_no        AS workflow_no,  -- 交易号
+       trade_purchase_return_bill.bill_no            AS bill_no,      -- 单据号码
+       bas_supplier.code                             AS custmer_name, -- 客户/供应商名称
+       gds_goods_skc.code                            AS style_color,  -- 花号
+       ''                                            AS coding,       -- 编码
+       ''                                            AS gb_coding,    -- 国标码
+       sum(trade_purchase_return_bill_goods.pur_qty) AS out_qty,      -- 出库数量
+       ''                                            AS in_qty        -- 入库数量
+from trade_purchase_return_bill
+         left join bas_supplier on trade_purchase_return_bill.supplier_id = bas_supplier.id
+         left join trade_purchase_return_bill_goods
+                   on trade_purchase_return_bill.id = trade_purchase_return_bill_goods.bill_id
+         left join gds_singlproduct on trade_purchase_return_bill_goods.sku_id = gds_singlproduct.id
+         left join gds_goods_skc on gds_singlproduct.skc_id = gds_goods_skc.id
+where trade_purchase_return_bill.delivery_status = 8
+  AND trade_purchase_return_bill.base_company_id = '10001'
+#   AND (trade_purchase_return_bill.stock_date >= '2022-03-20' AND trade_purchase_bill.stock_date <= '2022-03-31')
+#   AND bas_supplier.code LIKE ('') -- 供应商
+#   AND ('1' IN ('@queryType'))
+group by trade_purchase_return_bill.stock_date,  -- 日期
+         trade_purchase_return_bill.workflow_no, -- 交易号
+         trade_purchase_return_bill.bill_no,     -- 单据号码
+         bas_supplier.code,                      -- 客户/供应商名称
+         gds_goods_skc.code
+
+# 编码
+select trade_purchase_return_bill.stock_date         AS stock_date,   -- 日期
+       trade_purchase_return_bill.workflow_no        AS workflow_no,  -- 交易号
+       trade_purchase_return_bill.bill_no            AS bill_no,      -- 单据号码
+       bas_supplier.code                             AS custmer_name, -- 客户/供应商名称
+       ''                                            AS style_color,  -- 花号
+       ''                                            AS coding,       -- 编码
+       ''                                            AS gb_coding,    -- 国标码
+       sum(trade_purchase_return_bill_goods.pur_qty) AS out_qty,      -- 出库数量
+       ''                                            AS in_qty        -- 入库数量
+from trade_purchase_return_bill
+         left join bas_supplier on trade_purchase_return_bill.supplier_id = bas_supplier.id
+         left join trade_purchase_return_bill_goods
+                   on trade_purchase_return_bill.id = trade_purchase_return_bill_goods.bill_id
+where trade_purchase_return_bill.delivery_status = 8
+  AND trade_purchase_return_bill.base_company_id = '10001'
+#   AND (trade_purchase_return_bill.stock_date >= '2022-03-20' AND trade_purchase_bill.stock_date <= '2022-03-31')
+#   AND bas_supplier.code LIKE ('') -- 供应商
+#   AND ('1' IN ('@queryType'))
+group by trade_purchase_return_bill.stock_date,  -- 日期
+         trade_purchase_return_bill.workflow_no, -- 交易号
+         trade_purchase_return_bill.bill_no,     -- 单据号码
+         bas_supplier.code -- 客户/供应商名称

@@ -1,0 +1,340 @@
+	SELECT project.name,a.billNo,IFNULL(a.monthPositiveTaxInclusive,0) AS monthPositiveTaxInclusive,IFNULL(b.positiveCostMoney,0) AS positiveCostMoney,
+	IFNULL(IFNULL(a.monthPositiveTaxInclusive,0)-IFNULL(b.positiveCostMoney,0),0) AS positiveGrossMargin,
+	IFNULL(IFNULL(IFNULL(a.monthPositiveTaxInclusive,0)-IFNULL(b.positiveCostMoney,0),0)/IFNULL(a.monthPositiveTaxInclusive,0),0) AS positiveGrossProfitRate,
+	0 AS classMarket,0 AS classCostMoney,0 AS dClassGrossMargin,0 AS dClassGrossProfitRate,0 AS bestSellerMarket,0 AS bestSellerCostMoney,
+	0 AS bestSellerMargin,0 AS bestSellerMarginRate
+	FROM 
+	(SELECT IFNULL(SUM(monthPositiveTaxInclusive),0) AS monthPositiveTaxInclusive,project,billNo FROM 
+	(SELECT amount AS monthPositiveTaxInclusive,business_party_id AS project,bill_no AS billNo FROM stk_stock_logic_workflow WHERE bill_name IN ('71','77') AND sales_item_id = '12' AND 
+	IF('${startDate}' = '',1=1, stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.goods_price AS monthPositiveTaxInclusive,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_sale_bill_line a LEFT JOIN drp_cons_sale_bill b ON a.cons_sale_bill_id = b.id 
+	WHERE b.sale_project_id = '12' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.goods_price AS monthPositiveTaxInclusive,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_return_bill_line a LEFT JOIN drp_cons_return_bill b ON a.cons_sale_return_bill_id = b.id 
+	WHERE b.sale_project_id = '12' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.settle_amount AS monthPositiveTaxInclusive,b.`shop_id` AS project,b.bill_no AS billNo FROM trade_retail_bill_payment a LEFT JOIN trade_retail_bill b ON a.bill_id = b.id 
+	WHERE b.sale_project_id = '12' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.settle_amount AS monthPositiveTaxInclusive,b.`shop_id` AS project,b.bill_no AS billNo FROM trade_retail_return_bill_payment a LEFT JOIN trade_retail_return_bill b ON a.bill_id = b.id 
+	WHERE b.sale_project_id = '12' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	) a GROUP BY billNo ) a 
+	LEFT JOIN 
+	(SELECT SUM(positiveCostMoney) AS positiveCostMoney,billNo FROM 
+	(SELECT a.change_qty*b.item_cost AS positiveCostMoney,a.bill_no AS billNo FROM (SELECT * FROM stk_stock_logic_workflow WHERE 
+	IF('${startDate}' = '',1=1, stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}')) ) a 
+	LEFT JOIN (SELECT * FROM fin_cst_pac_item_costs WHERE 
+	period_start_date LIKE '${startDate}%') b ON a.sku_id = b.sku_id AND a.owner_id = b.base_company_id 
+	) b GROUP BY billNo ) b ON a.billNo = b.billNo 
+	LEFT JOIN 
+	(SELECT id,NAME FROM bas_customer UNION ALL SELECT id,NAME FROM bas_shop ) project ON project.id = a.project 
+	UNION ALL
+	SELECT project.name,c.billNo,0 AS monthPositiveTaxInclusive,0 AS positiveCostMoney,0 AS positiveGrossMargin,0 AS positiveGrossProfitRate,
+	IFNULL(c.classMarket,0) AS classMarket,IFNULL(d.classCostMoney,0) AS classCostMoney,IFNULL(c.classMarket,0)-IFNULL(d.classCostMoney,0) AS dClassGrossMargin,
+	IFNULL(IFNULL(IFNULL(c.classMarket,0)-IFNULL(d.classCostMoney,0),0)/IFNULL(c.classMarket,0),0) AS dClassGrossProfitRate,0 AS bestSellerMarket,
+	0 AS bestSellerCostMoney,0 AS bestSellerMargin,0 AS bestSellerMarginRate
+	FROM 
+	(SELECT SUM(classMarket) AS classMarket,project,billNo FROM 
+	(SELECT amount AS classMarket,business_party_id AS project,bill_no AS billNo FROM stk_stock_logic_workflow WHERE bill_name IN ('71','77') AND sales_item_id = '10029' AND 
+	IF('${startDate}' = '',1=1, stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.goods_price AS classMarket,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_sale_bill_line a LEFT JOIN drp_cons_sale_bill b ON a.cons_sale_bill_id = b.id 
+	WHERE b.sale_project_id = '10029' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.goods_price AS classMarket,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_return_bill_line a LEFT JOIN drp_cons_return_bill b ON a.cons_sale_return_bill_id = b.id 
+	WHERE b.sale_project_id = '10029' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.settle_amount AS classMarket,b.`shop_id` AS project,a.bill_no AS billNo FROM trade_retail_bill_payment a LEFT JOIN trade_retail_bill b ON a.bill_id = b.id 
+	WHERE b.sale_project_id = '10029' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.settle_amount AS classMarket,b.`shop_id` AS project,a.bill_no AS billNo FROM trade_retail_return_bill_payment a LEFT JOIN trade_retail_return_bill b ON a.bill_id = b.id 
+	WHERE b.sale_project_id = '10029' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	) c GROUP BY billNo ) c 
+	LEFT JOIN 
+	(SELECT SUM(classCostMoney) AS classCostMoney,billNo FROM 
+	(SELECT a.change_qty*b.item_cost AS classCostMoney,a.bill_no AS billNo FROM (SELECT * FROM stk_stock_logic_workflow WHERE stock_date LIKE '${startDate}%'
+	AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))) a 
+	LEFT JOIN (SELECT * FROM fin_cst_pac_item_costs WHERE period_start_date LIKE '${startDate}%') b ON a.sku_id = b.sku_id AND a.owner_id = b.base_company_id 
+	) d GROUP BY billNo ) d ON c.billNo = d.billNo 
+	LEFT JOIN 
+	(SELECT id,NAME FROM bas_customer UNION ALL SELECT id,NAME FROM bas_shop ) project ON project.id = c.project 
+	UNION ALL
+	SELECT project.name,e.billNo,0 AS monthPositiveTaxInclusive,0 AS positiveCostMoney,
+	0 AS positiveGrossMargin,0 AS positiveGrossProfitRate,0 AS classMarket,0 AS classCostMoney,0 AS dClassGrossMargin,
+	0 AS dClassGrossProfitRate,IFNULL(e.bestSellerMarket,0) AS bestSellerMarket,
+	IFNULL(f.bestSellerCostMoney,0) AS bestSellerCostMoney,IFNULL(e.bestSellerMarket,0)-IFNULL(f.bestSellerCostMoney,0) AS bestSellerMargin,
+	IFNULL(IFNULL(IFNULL(e.bestSellerMarket,0)-IFNULL(f.bestSellerCostMoney,0),0)/IFNULL(e.bestSellerMarket,0),0) AS bestSellerMarginRate
+	FROM 
+	(SELECT SUM(bestSellerMarket) AS bestSellerMarket,project,billNo FROM 
+	(SELECT amount AS bestSellerMarket,business_party_id AS project,bill_no AS billNo FROM stk_stock_logic_workflow WHERE bill_name IN ('71','77') AND sales_item_id = '10030' AND 
+	IF('${startDate}' = '',1=1, stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.goods_price AS bestSellerMarket,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_sale_bill_line a LEFT JOIN drp_cons_sale_bill b ON a.cons_sale_bill_id = b.id 
+	WHERE b.sale_project_id = '10030' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.goods_price AS bestSellerMarket,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_return_bill_line a LEFT JOIN drp_cons_return_bill b ON a.cons_sale_return_bill_id = b.id 
+	WHERE b.sale_project_id = '10030' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.settle_amount AS bestSellerMarket,b.`shop_id` AS project,a.bill_no AS billNo FROM trade_retail_bill_payment a LEFT JOIN trade_retail_bill b ON a.bill_id = b.id 
+	WHERE b.sale_project_id = '10030' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	UNION ALL
+	SELECT a.settle_amount AS bestSellerMarket,b.`shop_id` AS project,a.bill_no AS billNo FROM trade_retail_return_bill_payment a LEFT JOIN trade_retail_return_bill b ON a.bill_id = b.id 
+	WHERE b.sale_project_id = '10030' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+	) e GROUP BY billNo ) e  
+	LEFT JOIN 
+	(SELECT SUM(bestSellerCostMoney) AS bestSellerCostMoney,billNo FROM 
+	(SELECT a.change_qty*b.item_cost AS bestSellerCostMoney,a.bill_no AS billNo FROM (SELECT * FROM stk_stock_logic_workflow WHERE stock_date LIKE '${startDate}%'
+	AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))) a LEFT JOIN (SELECT * FROM fin_cst_pac_item_costs WHERE 
+	period_start_date LIKE '${startDate}%') b ON a.sku_id = b.sku_id AND a.owner_id = b.base_company_id
+	) f GROUP BY billNo ) f ON e.billNo = f.billNo 
+	LEFT JOIN 
+	(SELECT id,NAME FROM bas_customer UNION ALL SELECT id,NAME FROM bas_shop ) project ON project.id = e.project xxxxxxxxxx ) e ON a.hl = e.hlLEFT JOIN (SELECT    ggba.field_2 hl,    IFNULL( sum( tsbl.qty ), 0 ) bqhhsl,    IFNULL( sum( tsbl.amount ), 0 ) bqhhjeFROM    trade_sale_bill tsb    LEFT JOIN trade_sale_bill_line tsbl ON tsb.id = tsbl.bill_id    LEFT JOIN bas_customer bc ON bc.accounting_company_id = tsb.base_company_id    AND (bc.id IN (0) OR 1=1)    LEFT JOIN gds_goods_base_attribute ggba ON tsbl.goods_id = ggba.goods_id    and (ggba.field_10 LIKE '%%' OR 1=1)WHERE  tsb.bill_status = "15"    AND tsb.sale_method = "C"    AND ((tsb.stock_date BETWEEN CONCAT('2021-01','-01')            AND CONCAT('2022-12','-31'))    OR ('2021-01'='@' AND '2022-12'='@'))GROUP BY    ggba.field_2) f ON a.hl = f.hlLEFT JOIN (SELECT    ggba.field_2 hl,    IFNULL( sum( sslw.change_qty ), 0 ) bcyksl,    IFNULL( sum( sslw.amount ), 0 ) bcykjeFROM    stk_stock_logic_workflow sslw    LEFT JOIN (    SELECT        blp.id ownerId    FROM        bas_customer bc        LEFT JOIN bas_legal_person_company blpc ON bc.legal_person_company_id = blpc.id        LEFT JOIN bas_legal_person blp ON blpc.legal_person_code = blp.CODE    WHERE    (bc.id IN (0) OR 1=1)) o ON sslw.owner_id = o.ownerId    LEFT JOIN gds_goods_base_attribute ggba ON sslw.goods_id = ggba.goods_idWHERE    (ggba.field_4 LIKE '%%' OR 1=1)    AND sslw.bill_name = "1D"    AND sslw.bill_type = "91"    AND sslw.qty_type = "1"    AND ((sslw.stock_date BETWEEN CONCAT('2021-01','-01')            AND CONCAT('2022-12','-31')) OR ('2021-01'='@' AND '2022-12'='@'))GROUP BY    ggba.field_2) g ON a.hl = g.hlLEFT JOIN (SELECT    ggba.field_2 hl,    IFNULL( sum( sslw.change_qty ), 0 ) nbdbdcslFROM    stk_stock_logic_workflow sslw    LEFT JOIN (    SELECT        blp.id ownerId    FROM        bas_customer bc        LEFT JOIN bas_legal_person_company blpc ON bc.legal_person_company_id = blpc.id        LEFT JOIN bas_legal_person blp ON blpc.legal_person_code = blp.CODE    WHERE    (bc.id IN (0) OR 1=1)) o ON sslw.owner_id = o.ownerId    LEFT JOIN gds_goods_base_attribute ggba ON sslw.goods_id = ggba.goods_idWHERE    (ggba.field_4 LIKE '%%' OR 1=1)    AND sslw.bill_name = "86"    AND sslw.qty_type = "1"    AND ((sslw.stock_date BETWEEN CONCAT('2021-01','-01')    AND CONCAT('2022-12','-31'))    OR ('2021-01'='@' AND '2022-12'='@'))GROUP BY    ggba.field_2) h ON a.hl = h.hlLEFT JOIN (SELECT    ggba.field_2 hl,    IFNULL( sum( sslw.change_qty ), 0 ) nbdbdrslFROM    stk_stock_logic_workflow sslw    LEFT JOIN (    SELECT        blp.id ownerId    FROM        bas_customer bc        LEFT JOIN bas_legal_person_company blpc ON bc.legal_person_company_id = blpc.id        LEFT JOIN bas_legal_person blp ON blpc.legal_person_code = blp.CODE    WHERE    (bc.id IN (0) OR 1=1)) o ON sslw.owner_id = o.ownerId    LEFT JOIN gds_goods_base_attribute ggba ON sslw.goods_id = ggba.goods_idWHERE    (ggba.field_4 LIKE '%%' OR 1=1)    AND sslw.bill_name = "85"    AND sslw.qty_type = "1"    AND ((sslw.stock_date BETWEEN CONCAT('2021-01','-01')            AND CONCAT('2022-12','-31'))    OR ('2021-01'='@' AND '2022-12'='@'))GROUP BYggba.field_2) i ON a.hl = i.hl
+
+7-7 中台原始
+
+```
+SELECT
+	a.hl AS hl,
+	a.gName AS gName,
+	COALESCE ( "大类" ) AS dl,
+	IFNULL( b.qcsl, 0 ) AS qcsl,
+	IFNULL( b.qcje, 0 ) AS qcje,
+	IFNULL( c.bcjhsl, 0 ) AS bcjhsl,
+	IFNULL( c.bcjhje, 0 ) AS bcjhje,
+	IFNULL( d.bcthsl, 0 ) AS bcthsl,
+	IFNULL( d.bcthje, 0 ) AS bcthje,
+	IFNULL( e.bcxssl, 0 ) AS bcxssl,
+	IFNULL( e.bcxsje, 0 ) AS bcxsje,
+	IFNULL( f.bqhhsl, 0 ) AS bqhhsl,
+	IFNULL( f.bqhhje, 0 ) AS bqhhje,
+	IFNULL( g.bcyksl, 0 ) AS bcyksl,
+	IFNULL( g.bcykje, 0 ) AS bcykje,
+	IFNULL( h.nbdbdcsl, 0 ) AS nbdbdcsl,
+	IFNULL( i.nbdbdrsl, 0 ) AS nbdbdrsl,
+	COALESCE ( 0 ) AS nbdbje,
+	IFNULL(
+		IFNULL( b.qcsl, 0 )+ IFNULL( c.bcjhsl, 0 )+ IFNULL( d.bcthsl, 0 )- IFNULL( e.bcxssl, 0 )- IFNULL( f.bqhhsl, 0 )+ IFNULL( g.bcyksl, 0 )- IFNULL( h.nbdbdcsl, 0 )+ IFNULL( i.nbdbdrsl, 0 ),
+		0 
+	) AS bqqmsl,
+	IFNULL(
+		IFNULL( b.qcje, 0 )+ IFNULL( c.bcjhje, 0 )+ IFNULL( d.bcthje, 0 )- IFNULL( e.bcxsje, 0 )- IFNULL( f.bqhhje, 0 )+ IFNULL( g.bcykje, 0 ),
+		0 
+	) AS bqqmje 
+FROM
+	(
+	SELECT
+		ggba.field_2 AS hl,
+		ga.NAME AS gName 
+	FROM
+		gds_goods_base_attribute ggba
+		INNER JOIN gds_attrvalue ga ON ggba.field_2 = ga.id 
+	WHERE
+		(ggba.field_4 LIKE '%@HH%' OR '@HH'='%@%') 
+	GROUP BY
+		ggba.field_2 
+	) a
+	LEFT JOIN (
+	SELECT
+		ggba.field_2 hl,
+		IFNULL( sum( fcpic.total_layer_qty ), 0 ) AS qcsl,
+		IFNULL( sum( fcpic.item_value ), 0 ) AS qcje 
+	FROM
+		fin_cst_pac_item_costs_summary fcpic
+		LEFT JOIN gds_goods_base_attribute ggba ON fcpic.summary_item_id = ggba.goods_id
+		and (ggba.field_4 LIKE '%@HH%' OR '@HH'='%@%') 
+		LEFT JOIN bas_customer bc ON fcpic.summary_org_id = bc.accounting_company_id AND (bc.id IN ('@CUSTOMER') OR '@CUSTOMER'='@') 
+	WHERE
+	 ((fcpic.period_start_date >= CONCAT('@BEGIN_DATE','-01')) 
+     OR ('@BEGIN_DATE'='@')) 
+		AND ((fcpic.period_end_date <= CONCAT('@END_DATE','-31')) OR ('@END_DATE'='@')) 
+	GROUP BY
+		ggba.field_2 
+	) b ON a.hl = b.hl
+	LEFT JOIN (
+	SELECT
+		ggba.field_2 AS hl,
+		IFNULL( sum( sslw.change_qty ), 0 ) AS bcjhsl,
+		IFNULL( sum( sslw.amount ), 0 ) bcjhje 
+	FROM
+		stk_stock_logic_workflow sslw
+		LEFT JOIN (
+		SELECT
+			blp.id ownerId 
+		FROM
+			bas_customer bc
+			LEFT JOIN bas_legal_person_company blpc ON bc.legal_person_company_id = blpc.id
+			LEFT JOIN bas_legal_person blp ON blpc.legal_person_code = blp.CODE 
+		WHERE
+		(bc.id IN ('@CUSTOMER') OR '@CUSTOMER'='@')) o ON sslw.owner_id = o.ownerId
+		LEFT JOIN gds_goods_base_attribute ggba ON sslw.goods_id = ggba.goods_id 
+	WHERE
+		(ggba.field_4 LIKE '%@HH%' OR '@HH'='%@%') 
+		AND sslw.bill_name = "67" 
+		AND sslw.qty_type = "1" 
+		AND ((sslw.stock_date BETWEEN CONCAT('@BEGIN_DATE','-01') 
+				AND CONCAT('@END_DATE','-31')) 
+		OR ('@BEGIN_DATE'='@' AND '@END_DATE'='@')) 
+	GROUP BY
+		ggba.field_2 
+	) c ON a.hl = c.hl
+	LEFT JOIN (
+	SELECT
+		ggba.field_2 hl,
+		IFNULL( sum( sslw.change_qty ), 0 ) bcthsl,
+		IFNULL( sum( sslw.amount ), 0 ) bcthje 
+	FROM
+		stk_stock_logic_workflow sslw
+		LEFT JOIN (
+		SELECT
+			blp.id ownerId 
+		FROM
+			bas_customer bc
+			LEFT JOIN bas_legal_person_company blpc ON bc.legal_person_company_id = blpc.id
+			LEFT JOIN bas_legal_person blp ON blpc.legal_person_code = blp.CODE 
+		WHERE
+		(bc.id IN ('@CUSTOMER') OR '@CUSTOMER'='@')) o ON sslw.owner_id = o.ownerId 
+		LEFT JOIN gds_goods_base_attribute ggba ON sslw.goods_id = ggba.goods_id 
+	WHERE
+		(ggba.field_4 LIKE '%@HH%' OR '@HH'='%@%') 
+		AND sslw.bill_name = "68" 
+		AND sslw.qty_type = "1" 
+		AND ((sslw.stock_date BETWEEN CONCAT('@BEGIN_DATE','-01') 
+				AND CONCAT('@END_DATE','-31')) 
+		OR ('@BEGIN_DATE'='@' AND '@END_DATE'='@')) 
+	GROUP BY
+		ggba.field_2 
+	) d ON a.hl = d.hl
+	LEFT JOIN (
+	SELECT
+		ggba.field_2 hl,
+		IFNULL( sum( sslw.change_qty ), 0 ) bcxssl,
+		IFNULL( sum( IFNULL( sslw.amount, 0 )+ IFNULL( f.costAmount, 0 )), 0 ) bcxsje 
+	FROM
+		stk_stock_logic_workflow sslw
+		INNER JOIN gds_goods_base_attribute ggba ON sslw.goods_id = ggba.goods_id
+		LEFT JOIN (
+		SELECT
+			fcpug.goods_id goodsId,
+			fcpug.cost_amount costAmount 
+		FROM
+			fin_cst_pac_update_goods fcpug
+			LEFT JOIN fin_cst_pac_update fcpu ON fcpu.id = fcpug.bill_id
+			LEFT JOIN bas_customer bc ON bc.accounting_company_id = fcpu.base_company_id
+		  and (bc.id IN ('@CUSTOMER') OR '@CUSTOMER'='@')	
+		WHERE
+ ((fcpu.stock_date BETWEEN CONCAT('@BEGIN_DATE','-01') 
+					AND CONCAT('@END_DATE','-31')) 
+			OR ('@BEGIN_DATE'='@' AND '@END_DATE'='@'))) f ON sslw.goods_id = f.goodsId 
+	WHERE
+		(ggba.field_4 LIKE '%@HH%' OR '@HH'='%@%') 
+		AND sslw.bill_name = "71" 
+		AND sslw.qty_type = "1" 
+		AND ((sslw.stock_date BETWEEN CONCAT('@BEGIN_DATE','-01') 
+				AND CONCAT('@END_DATE','-31')) 
+		OR ('@BEGIN_DATE'='@' AND '@END_DATE'='@')) 
+	GROUP BY
+		ggba.field_2 
+	) e ON a.hl = e.hl
+	LEFT JOIN (
+	SELECT
+		ggba.field_2 hl,
+		IFNULL( sum( tsbl.qty ), 0 ) bqhhsl,
+		IFNULL( sum( tsbl.amount ), 0 ) bqhhje 
+	FROM
+		trade_sale_bill tsb
+		LEFT JOIN trade_sale_bill_line tsbl ON tsb.id = tsbl.bill_id
+		LEFT JOIN bas_customer bc ON bc.accounting_company_id = tsb.base_company_id 
+		AND (bc.id IN ('@CUSTOMER') OR '@CUSTOMER'='@') 
+		LEFT JOIN gds_goods_base_attribute ggba ON tsbl.goods_id = ggba.goods_id 
+		and (ggba.field_10 LIKE '%@HH%' OR '@HH'='%@%') 
+	WHERE
+      tsb.bill_status = "15" 
+		AND tsb.sale_method = "C" 
+		AND ((tsb.stock_date BETWEEN CONCAT('@BEGIN_DATE','-01') 
+				AND CONCAT('@END_DATE','-31')) 
+		OR ('@BEGIN_DATE'='@' AND '@END_DATE'='@')) 
+	GROUP BY
+		ggba.field_2 
+	) f ON a.hl = f.hl
+	LEFT JOIN (
+	SELECT
+		ggba.field_2 AS hl,
+		IFNULL( sum( sslw.change_qty ), 0 ) bcyksl,
+		IFNULL( sum( sslw.amount ), 0 ) bcykje 
+	FROM
+		stk_stock_logic_workflow sslw
+		LEFT JOIN (
+		SELECT
+			blp.id ownerId 
+		FROM
+			bas_customer bc
+			LEFT JOIN bas_legal_person_company blpc ON bc.legal_person_company_id = blpc.id
+			LEFT JOIN bas_legal_person blp ON blpc.legal_person_code = blp.CODE 
+		WHERE
+		(bc.id IN ('@CUSTOMER') OR '@CUSTOMER'='@')) o ON sslw.owner_id = o.ownerId
+		LEFT JOIN gds_goods_base_attribute ggba ON sslw.goods_id = ggba.goods_id 
+	WHERE
+		(ggba.field_4 LIKE '%@HH%' OR '@HH'='%@%') 
+		AND sslw.bill_name = "1D" 
+		AND sslw.bill_type = "91" 
+		AND sslw.qty_type = "1" 
+		AND ((sslw.stock_date BETWEEN CONCAT('@BEGIN_DATE','-01') 
+				AND CONCAT('@END_DATE','-31')) OR ('@BEGIN_DATE'='@' AND '@END_DATE'='@')) 
+	GROUP BY
+		ggba.field_2 
+	) g ON a.hl = g.hl
+	LEFT JOIN (
+	SELECT
+		ggba.field_2 hl,
+		IFNULL( sum( sslw.change_qty ), 0 ) nbdbdcsl 
+	FROM
+		stk_stock_logic_workflow sslw
+		LEFT JOIN (
+		SELECT
+			blp.id ownerId 
+		FROM
+			bas_customer bc
+			LEFT JOIN bas_legal_person_company blpc ON bc.legal_person_company_id = blpc.id
+			LEFT JOIN bas_legal_person blp ON blpc.legal_person_code = blp.CODE 
+		WHERE
+		(bc.id IN ('@CUSTOMER') OR '@CUSTOMER'='@')) o ON sslw.owner_id = o.ownerId
+		LEFT JOIN gds_goods_base_attribute ggba ON sslw.goods_id = ggba.goods_id 
+	WHERE
+		(ggba.field_4 LIKE '%@HH%' OR '@HH'='%@%') 
+		AND sslw.bill_name = "86" 
+		AND sslw.qty_type = "1" 
+		AND ((sslw.stock_date BETWEEN CONCAT('@BEGIN_DATE','-01') 
+		AND CONCAT('@END_DATE','-31')) 
+		OR ('@BEGIN_DATE'='@' AND '@END_DATE'='@')) 
+	GROUP BY
+		ggba.field_2 
+	) h ON a.hl = h.hl
+	LEFT JOIN (
+	SELECT
+		ggba.field_2 hl,
+		IFNULL( sum( sslw.change_qty ), 0 ) nbdbdrsl 
+	FROM
+		stk_stock_logic_workflow sslw
+		LEFT JOIN (
+		SELECT
+			blp.id ownerId 
+		FROM
+			bas_customer bc
+			LEFT JOIN bas_legal_person_company blpc ON bc.legal_person_company_id = blpc.id
+			LEFT JOIN bas_legal_person blp ON blpc.legal_person_code = blp.CODE 
+		WHERE
+		(bc.id IN ('@CUSTOMER') OR '@CUSTOMER'='@')) o ON sslw.owner_id = o.ownerId
+		LEFT JOIN gds_goods_base_attribute ggba ON sslw.goods_id = ggba.goods_id 
+	WHERE
+		(ggba.field_4 LIKE '%@HH%' OR '@HH'='%@%') 
+		AND sslw.bill_name = "85" 
+		AND sslw.qty_type = "1" 
+		AND ((sslw.stock_date BETWEEN CONCAT('@BEGIN_DATE','-01') 
+				AND CONCAT('@END_DATE','-31')) 
+		OR ('@BEGIN_DATE'='@' AND '@END_DATE'='@')) 
+	GROUP BY
+	ggba.field_2 
+	) i ON a.hl = i.hl
+```
+

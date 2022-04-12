@@ -1,0 +1,1025 @@
+```sql
+SELECT
+	a2.field_4 AS 'huoHao',
+	(
+	SELECT
+		sum( b1.end_qty ) 
+	FROM
+		fin_stock_period_summary b1 
+	WHERE
+		b1.base_company_id = a1.base_company_id 
+		AND b1.goods_id = a2.goods_id 
+		AND b1.start_date LIKE (
+		SELECT
+			concat(
+				'%',
+				EXTRACT(
+				YEAR 
+				FROM
+				concat( '@startMonth', '-01' )),
+				'-',
+			IF
+				( EXTRACT( MONTH FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+				EXTRACT(
+				MONTH 
+				FROM
+				concat( '@startMonth', '-01' ))- 1,
+				'-',
+			IF
+				( EXTRACT( DAY FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+				EXTRACT(
+				DAY 
+				FROM
+				concat( '@startMonth', '-01' )),
+				'%' 
+			) 
+		)) AS 'startQty',
+	(
+	SELECT
+		sum( b1.end_qty * a1.item_cost ) 
+	FROM
+		fin_stock_period_summary b1 
+	WHERE
+		b1.base_company_id = a1.base_company_id 
+		AND b1.goods_id = a2.goods_id 
+		AND b1.start_date LIKE (
+		SELECT
+			concat(
+				'%',
+				EXTRACT(
+				YEAR 
+				FROM
+				concat( '@startMonth', '-01' )),
+				'-',
+			IF
+				( EXTRACT( MONTH FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+				EXTRACT(
+				MONTH 
+				FROM
+				concat( '@startMonth', '-01' ))- 1,
+				'-',
+			IF
+				( EXTRACT( DAY FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+				EXTRACT(
+				DAY 
+				FROM
+				concat( '@startMonth', '-01' )),
+				'%' 
+			) 
+		)) AS 'startAmount',
+	((
+		SELECT
+			sum( b1.end_qty * a1.item_cost ) 
+		FROM
+			fin_stock_period_summary b1 
+		WHERE
+			b1.base_company_id = a1.base_company_id 
+			AND b1.goods_id = a2.goods_id 
+			AND b1.start_date LIKE (
+			SELECT
+				concat(
+					'%',
+					EXTRACT(
+					YEAR 
+					FROM
+					concat( '@startMonth', '-01' )),
+					'-',
+				IF
+					( EXTRACT( MONTH FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+					EXTRACT(
+					MONTH 
+					FROM
+					concat( '@startMonth', '-01' ))- 1,
+					'-',
+				IF
+					( EXTRACT( DAY FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+					EXTRACT(
+					DAY 
+					FROM
+					concat( '@startMonth', '-01' )),
+					'%' 
+				) 
+			)) / (
+		SELECT
+			sum( b1.end_qty ) 
+		FROM
+			fin_stock_period_summary b1 
+		WHERE
+			b1.base_company_id = a1.base_company_id 
+			AND b1.goods_id = a2.goods_id 
+			AND b1.start_date LIKE (
+			SELECT
+				concat(
+					'%',
+					EXTRACT(
+					YEAR 
+					FROM
+					concat( '@startMonth', '-01' )),
+					'-',
+				IF
+					( EXTRACT( MONTH FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+					EXTRACT(
+					MONTH 
+					FROM
+					concat( '@startMonth', '-01' ))- 1,
+					'-',
+				IF
+					( EXTRACT( DAY FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+					EXTRACT(
+					DAY 
+					FROM
+					concat( '@startMonth', '-01' )),
+					'%' 
+				) 
+			))) AS 'startPrice',
+	sum( a4.pur_qty ) AS 'jinHuoQty',
+	sum( a4.amount ) AS 'jinHuoAmount',
+	ifnull( sum( a4.amount )/ sum( a4.pur_qty ), 0 ) AS 'jinHuoPrice',
+	(
+	SELECT
+		ifnull( sum( b2.pur_qty )*(- 1 ), 0 ) 
+	FROM
+		trade_purchase_return_bill b1
+		LEFT JOIN trade_purchase_return_bill_goods b2 ON b1.id = b2.bill_id 
+	WHERE
+		b1.base_company_id = a1.base_company_id 
+		AND b1.bill_status = '03' 
+		AND b2.goods_id = a2.goods_id 
+		AND b1.pur_method = 'P' 
+		AND (
+			b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+		AND concat( '@endMonth', '-31' )) 
+	) AS 'JinHuoTuiQty',
+	(
+	SELECT
+		ifnull( sum( b2.amount )*(- 1 ), 0 ) 
+	FROM
+		trade_purchase_return_bill b1
+		LEFT JOIN trade_purchase_return_bill_goods b2 ON b1.id = b2.bill_id 
+	WHERE
+		b1.base_company_id = a1.base_company_id 
+		AND b1.bill_status = '03' 
+		AND b2.goods_id = a2.goods_id 
+		AND b1.pur_method = 'P' 
+		AND (
+			b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+		AND concat( '@endMonth', '-31' )) 
+	) AS 'JinHuoTuiAmount',
+	(
+	SELECT
+		ifnull( sum( b2.amount )/ sum( b2.pur_qty ), 0 ) 
+	FROM
+		trade_purchase_return_bill b1
+		LEFT JOIN trade_purchase_return_bill_goods b2 ON b1.id = b2.bill_id 
+	WHERE
+		b1.base_company_id = a1.base_company_id 
+		AND b1.bill_status = '03' 
+		AND b2.goods_id = a2.goods_id 
+		AND b1.pur_method = 'P' 
+		AND (
+			b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+		AND concat( '@endMonth', '-31' )) 
+	) AS 'JinHuoTuiPrice',
+	(
+	SELECT
+		ifnull( sum( b1.change_qty ), 0 ) 
+	FROM
+		stk_stock_logic_workflow b1
+		INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+	WHERE
+		b2.accounting_company_id = a1.base_company_id 
+		AND b1.bill_name IN ( '76', '77' ) 
+		AND b1.stock_type IN ( '1' ) 
+		AND b1.qty_type IN ( '1' ) 
+		AND b1.goods_id = a2.goods_id 
+		AND (
+			b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+		AND concat( '@endMonth', '-31' )) 
+	) AS 'xiaoShouQty',
+	((
+		SELECT
+			ifnull( sum( b1.amount ), 0 ) 
+		FROM
+			stk_stock_logic_workflow b1
+			INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+		WHERE
+			b2.accounting_company_id = a1.base_company_id 
+			AND b1.bill_name IN ( '76', '77' ) 
+			AND b1.stock_type IN ( '1' ) 
+			AND b1.qty_type IN ( '1' ) 
+			AND b1.goods_id = a2.goods_id 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' )) 
+			) + (
+		SELECT
+			ifnull( sum( b2.cost_amount ), 0 ) 
+		FROM
+			fin_cst_pac_update b1
+			LEFT JOIN fin_cst_pac_update_goods b2 ON b1.id = b2.bill_id 
+		WHERE
+			b1.base_company_id = a1.base_company_id 
+			AND b2.goods_id = a2.goods_id 
+			AND b1.bill_type IN ( '1C' ) 
+			AND b1.bill_status IN ( '03' ) 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' )))) 'xiaoShouAmount',
+	(((
+			SELECT
+				ifnull( sum( b1.amount ), 0 ) 
+			FROM
+				stk_stock_logic_workflow b1
+				INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+			WHERE
+				b2.accounting_company_id = a1.base_company_id 
+				AND b1.bill_name IN ( '76', '77' ) 
+				AND b1.stock_type IN ( '1' ) 
+				AND b1.qty_type IN ( '1' ) 
+				AND b1.goods_id = a2.goods_id 
+				AND (
+					b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+				AND concat( '@endMonth', '-31' )) 
+				) + (
+			SELECT
+				ifnull( sum( b2.cost_amount ), 0 ) 
+			FROM
+				fin_cst_pac_update b1
+				LEFT JOIN fin_cst_pac_update_goods b2 ON b1.id = b2.bill_id 
+			WHERE
+				b1.base_company_id = a1.base_company_id 
+				AND b2.goods_id = a2.goods_id 
+				AND b1.bill_type IN ( '1C' ) 
+				AND b1.bill_status IN ( '03' ) 
+				AND (
+					b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+				AND concat( '@endMonth', '-31' )))) / (
+		SELECT
+			ifnull( sum( b1.change_qty ), 0 ) 
+		FROM
+			stk_stock_logic_workflow b1
+			INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+		WHERE
+			b2.accounting_company_id = a1.base_company_id 
+			AND b1.bill_name IN ( '76', '77' ) 
+			AND b1.stock_type IN ( '1' ) 
+			AND b1.qty_type IN ( '1' ) 
+			AND b1.goods_id = a2.goods_id 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' )) 
+		)) AS 'xiaoShouPrice',
+	0 AS 'keTuiHuoQty',
+	0 AS 'KeTuiHuoAmount',
+	0 AS 'KeTuiHuoPrice',
+	(
+	SELECT
+		ifnull( sum( b1.change_qty ), 0 ) 
+	FROM
+		stk_stock_logic_workflow b1
+		INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+	WHERE
+		b2.accounting_company_id = a1.base_company_id 
+		AND b1.stock_type IN ( '1' ) 
+		AND b1.qty_type IN ( '1' ) 
+		AND b1.bill_name IN ( '86' ) 
+		AND b1.goods_id = a2.goods_id 
+		AND (
+			b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+		AND concat( '@endMonth', '-31' )) 
+	) AS 'diaoBoChuQty',
+	(
+	SELECT
+		ifnull( sum( b1.change_qty ), 0 ) 
+	FROM
+		stk_stock_logic_workflow b1
+		INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+	WHERE
+		b2.accounting_company_id = a1.base_company_id 
+		AND b1.stock_type IN ( '1' ) 
+		AND b1.qty_type IN ( '1' ) 
+		AND b1.bill_name IN ( '85' ) 
+		AND b1.goods_id = a2.goods_id 
+		AND (
+			b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+		AND concat( '@endMonth', '-31' ))) AS 'diaoBoRuRuQty',
+	((
+		SELECT
+			ifnull( sum( b1.item_value ), 0 ) 
+		FROM
+			fin_cst_pac_item_costs b1 
+		WHERE
+			b1.goods_id = a1.goods_id 
+			AND ( b1.base_company_id IN ( '@companyId' ) OR '@companyId' = '@' ) 
+			AND b1.period_end_date LIKE (
+			SELECT
+				concat(
+					'%',
+					EXTRACT(
+					YEAR 
+					FROM
+					concat( '@endMonth', '-31' )),
+					'-',
+				IF
+					( EXTRACT( MONTH FROM concat( '@endMonth', '-31' ))< 11, '0', '' ),
+					EXTRACT(
+					MONTH 
+					FROM
+					concat( '@endMonth', '-31' ))- 1,
+					'-',
+				IF
+					( EXTRACT( DAY FROM concat( '@endMonth', '-31' ))< 11, '0', '' ),
+					EXTRACT(
+					DAY 
+					FROM
+					concat( '@endMonth', '-31' )),
+					'%' 
+				) 
+				)) -((
+			SELECT
+				sum( b1.end_qty * a1.item_cost ) 
+			FROM
+				fin_stock_period_summary b1 
+			WHERE
+				b1.base_company_id = a1.base_company_id 
+				AND b1.goods_id = a2.goods_id 
+				AND b1.start_date LIKE (
+				SELECT
+					concat(
+						'%',
+						EXTRACT(
+						YEAR 
+						FROM
+						concat( '@startMonth', '-01' )),
+						'-',
+					IF
+						( EXTRACT( MONTH FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+						EXTRACT(
+						MONTH 
+						FROM
+						concat( '@startMonth', '-01' ))- 1,
+						'-',
+					IF
+						( EXTRACT( DAY FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+						EXTRACT(
+						DAY 
+						FROM
+						concat( '@startMonth', '-01' )),
+						'%' 
+					) 
+				)) +(
+			SELECT
+				ifnull( sum( b2.amount )*(- 1 ), 0 ) 
+			FROM
+				trade_purchase_return_bill b1
+				LEFT JOIN trade_purchase_return_bill_goods b2 ON b1.id = b2.bill_id 
+			WHERE
+				b1.base_company_id = a1.base_company_id 
+				AND b1.bill_status = '03' 
+				AND b2.goods_id = a2.goods_id 
+				AND b1.pur_method = 'P' 
+				AND (
+					b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+				AND concat( '@endMonth', '-31' ))) +(
+			SELECT
+				ifnull( sum( b2.amount )*(- 1 ), 0 ) 
+			FROM
+				trade_purchase_return_bill b1
+				LEFT JOIN trade_purchase_return_bill_goods b2 ON b1.id = b2.bill_id 
+			WHERE
+				b1.base_company_id = a1.base_company_id 
+				AND b1.bill_status = '03' 
+				AND b2.goods_id = a2.goods_id 
+				AND b1.pur_method = 'P' 
+				AND (
+					b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+					AND concat( '@endMonth', '-31' ))) -((
+				SELECT
+					ifnull( sum( b1.amount ), 0 ) 
+				FROM
+					stk_stock_logic_workflow b1
+					INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+				WHERE
+					b2.accounting_company_id = a1.base_company_id 
+					AND b1.bill_name IN ( '76', '77' ) 
+					AND b1.stock_type IN ( '1' ) 
+					AND b1.qty_type IN ( '1' ) 
+					AND b1.goods_id = a2.goods_id 
+					AND (
+						b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+					AND concat( '@endMonth', '-31' )) 
+					) + (
+				SELECT
+					ifnull( sum( b2.cost_amount ), 0 ) 
+				FROM
+					fin_cst_pac_update b1
+					LEFT JOIN fin_cst_pac_update_goods b2 ON b1.id = b2.bill_id 
+				WHERE
+					b1.base_company_id = a1.base_company_id 
+					AND b2.goods_id = a2.goods_id 
+					AND b1.bill_type IN ( '1C' ) 
+					AND b1.bill_status IN ( '03' ) 
+					AND (
+						b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+					AND concat( '@endMonth', '-31' )))) + 0 +(
+			SELECT
+				ifnull( sum( b1.amount ), 0 ) 
+			FROM
+				stk_stock_logic_workflow b1
+				INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+			WHERE
+				b2.accounting_company_id = a1.base_company_id 
+				AND b1.stock_type IN ( '1' ) 
+				AND b1.qty_type IN ( '1' ) 
+				AND b1.bill_name IN ( '1D' ) 
+				AND b1.bill_type IN ( '91' ) 
+				AND b1.goods_id = a2.goods_id 
+				AND (
+					b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+				AND concat( '@endMonth', '-31' )) 
+			))) AS 'diaoBoAmount',
+	(
+	SELECT
+		ifnull( sum( b1.change_qty ), 0 ) 
+	FROM
+		stk_stock_logic_workflow b1
+		INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+	WHERE
+		b2.accounting_company_id = a1.base_company_id 
+		AND b1.stock_type IN ( '1' ) 
+		AND b1.qty_type IN ( '1' ) 
+		AND b1.bill_name IN ( '1D' ) 
+		AND b1.bill_type IN ( '91' ) 
+		AND b1.goods_id = a2.goods_id 
+		AND (
+			b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+		AND concat( '@endMonth', '-31' )) 
+	) AS 'yingKuiQty',
+	(
+	SELECT
+		ifnull( sum( b1.amount ), 0 ) 
+	FROM
+		stk_stock_logic_workflow b1
+		INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+	WHERE
+		b2.accounting_company_id = a1.base_company_id 
+		AND b1.stock_type IN ( '1' ) 
+		AND b1.qty_type IN ( '1' ) 
+		AND b1.bill_name IN ( '1D' ) 
+		AND b1.bill_type IN ( '91' ) 
+		AND b1.goods_id = a2.goods_id 
+		AND (
+			b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+		AND concat( '@endMonth', '-31' )) 
+	) AS 'yingKuiAmount',
+	((
+		SELECT
+			ifnull( sum( b1.amount ), 0 ) 
+		FROM
+			stk_stock_logic_workflow b1
+			INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+		WHERE
+			b2.accounting_company_id = a1.base_company_id 
+			AND b1.stock_type IN ( '1' ) 
+			AND b1.qty_type IN ( '1' ) 
+			AND b1.bill_name IN ( '1D' ) 
+			AND b1.bill_type IN ( '91' ) 
+			AND b1.goods_id = a2.goods_id 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' )) 
+			) / (
+		SELECT
+			ifnull( sum( b1.change_qty ), 0 ) 
+		FROM
+			stk_stock_logic_workflow b1
+			INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+		WHERE
+			b2.accounting_company_id = a1.base_company_id 
+			AND b1.stock_type IN ( '1' ) 
+			AND b1.qty_type IN ( '1' ) 
+			AND b1.bill_name IN ( '1D' ) 
+			AND b1.bill_type IN ( '91' ) 
+			AND b1.goods_id = a2.goods_id 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' )) 
+		)) AS 'yinKuiPrice',
+	((
+		SELECT
+			sum( b1.end_qty ) 
+		FROM
+			fin_stock_period_summary b1 
+		WHERE
+			b1.base_company_id = a1.base_company_id 
+			AND b1.goods_id = a2.goods_id 
+			AND b1.start_date LIKE (
+			SELECT
+				concat(
+					'%',
+					EXTRACT(
+					YEAR 
+					FROM
+					concat( '@startMonth', '-01' )),
+					'-',
+				IF
+					( EXTRACT( MONTH FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+					EXTRACT(
+					MONTH 
+					FROM
+					concat( '@startMonth', '-01' ))- 1,
+					'-',
+				IF
+					( EXTRACT( DAY FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+					EXTRACT(
+					DAY 
+					FROM
+					concat( '@startMonth', '-01' )),
+					'%' 
+				) 
+			)) + sum( a4.pur_qty ) +(
+		SELECT
+			ifnull( sum( b2.pur_qty )*(- 1 ), 0 ) 
+		FROM
+			trade_purchase_return_bill b1
+			LEFT JOIN trade_purchase_return_bill_goods b2 ON b1.id = b2.bill_id 
+		WHERE
+			b1.base_company_id = a1.base_company_id 
+			AND b1.bill_status = '03' 
+			AND b2.goods_id = a2.goods_id 
+			AND b1.pur_method = 'P' 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' ))) -(
+		SELECT
+			ifnull( sum( b1.change_qty ), 0 ) 
+		FROM
+			stk_stock_logic_workflow b1
+			INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+		WHERE
+			b2.accounting_company_id = a1.base_company_id 
+			AND b1.bill_name IN ( '76', '77' ) 
+			AND b1.stock_type IN ( '1' ) 
+			AND b1.qty_type IN ( '1' ) 
+			AND b1.goods_id = a2.goods_id 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' ))) -(
+		SELECT
+			ifnull( sum( b2.sale_qty ), 0 ) 
+		FROM
+			trade_sale_bill b1
+			LEFT JOIN trade_sale_bill_line b2 ON b1.id = b2.bill_id 
+		WHERE
+			b1.base_company_id = a1.base_company_id 
+			AND b1.bill_status IN ( '05' ) 
+			AND b1.sale_method IN ( 'C' ) 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' ))) +(
+		SELECT
+			ifnull( sum( b1.change_qty ), 0 ) 
+		FROM
+			stk_stock_logic_workflow b1
+			INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+		WHERE
+			b2.accounting_company_id = a1.base_company_id 
+			AND b1.stock_type IN ( '1' ) 
+			AND b1.qty_type IN ( '1' ) 
+			AND b1.bill_name IN ( '1D' ) 
+			AND b1.bill_type IN ( '91' ) 
+			AND b1.goods_id = a2.goods_id 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' ))) -(
+		SELECT
+			ifnull( sum( b1.change_qty ), 0 ) 
+		FROM
+			stk_stock_logic_workflow b1
+			INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+		WHERE
+			b2.accounting_company_id = a1.base_company_id 
+			AND b1.stock_type IN ( '1' ) 
+			AND b1.qty_type IN ( '1' ) 
+			AND b1.bill_name IN ( '86' ) 
+			AND b1.goods_id = a2.goods_id 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' ))) +(
+		SELECT
+			ifnull( sum( b1.change_qty ), 0 ) 
+		FROM
+			stk_stock_logic_workflow b1
+			INNER JOIN bas_stock_organization b2 ON b1.stock_organization_id = b2.id 
+		WHERE
+			b2.accounting_company_id = a1.base_company_id 
+			AND b1.stock_type IN ( '1' ) 
+			AND b1.qty_type IN ( '1' ) 
+			AND b1.bill_name IN ( '85' ) 
+			AND b1.goods_id = a2.goods_id 
+			AND (
+				b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+			AND concat( '@endMonth', '-31' )) 
+			AND b1.stock_date BETWEEN concat( '2021-08', '-01' ) 
+		AND concat( '2021-09', '-31' ))) AS 'endQty',
+	(
+	SELECT
+		ifnull( sum( b2.sale_qty ), 0 ) 
+	FROM
+		trade_sale_bill b1
+		LEFT JOIN trade_sale_bill_line b2 ON b1.id = b2.bill_id 
+	WHERE
+		b1.base_company_id = a1.base_company_id 
+		AND b1.bill_status IN ( '05' ) 
+		AND b1.sale_method IN ( 'C' ) 
+		AND (
+			b1.stock_date BETWEEN concat( '@startMonth', '-01' ) 
+		AND concat( '@endMonth', '-31' ))) 'changeQty',
+	(
+	SELECT
+		ifnull( sum( b1.item_value ), 0 ) 
+	FROM
+		fin_cst_pac_item_costs b1 
+	WHERE
+		b1.goods_id = a1.goods_id 
+		AND b1.base_company_id = '599969328820965436' 
+		AND b1.period_end_date LIKE (
+		SELECT
+			concat(
+				'%',
+				EXTRACT(
+				YEAR 
+				FROM
+				concat( '@endMonth', '-31' )),
+				'-',
+			IF
+				( EXTRACT( MONTH FROM concat( '@endMonth', '-31' ))< 11, '0', '' ),
+				EXTRACT(
+				MONTH 
+				FROM
+				concat( '@endMonth', '-31' ))- 1,
+				'-',
+			IF
+				( EXTRACT( DAY FROM concat( '@endMonth', '-31' ))< 11, '0', '' ),
+				EXTRACT(
+				DAY 
+				FROM
+				concat( '@endMonth', '-31' )),
+				'%' 
+			) 
+		)) AS 'endAmount' 
+FROM
+	fin_cst_pac_item_costs a1
+	LEFT JOIN gds_goods_base_attribute a2 ON a1.goods_id = a2.goods_id
+	LEFT JOIN trade_purchase_bill a3 ON a1.base_company_id = a3.base_company_id
+	LEFT JOIN trade_purchase_bill_goods a4 ON a4.bill_id = a3.id 
+WHERE
+	a3.bill_status = '03' 
+	AND a1.goods_id = a4.goods_id 
+	AND ( a1.base_company_id IN ( '@companyId' ) OR '@companyId' = '@' ) 
+	AND a1.period_start_date LIKE (
+	SELECT
+		concat(
+			'%',
+			EXTRACT(
+			YEAR 
+			FROM
+			concat( '@startMonth', '-01' )),
+			'-',
+		IF
+			( EXTRACT( MONTH FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+			EXTRACT(
+			MONTH 
+			FROM
+			concat( '@startMonth', '-01' ))- 1,
+			'-',
+		IF
+			( EXTRACT( DAY FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+			EXTRACT(
+			DAY 
+			FROM
+			concat( '@startMonth', '-01' )),
+			'%' 
+		) 
+	) 
+GROUP BY
+	a2.field_4
+```
+
+```
+LIKE (
+	SELECT
+		concat(
+			'%',
+			EXTRACT(
+			YEAR 
+			FROM
+			concat( '@startMonth', '-01' )),
+			'-',
+		IF
+			( EXTRACT( MONTH FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+			EXTRACT(
+			MONTH 
+			FROM
+			concat( '@startMonth', '-01' ))- 1,
+			'-',
+		IF
+			( EXTRACT( DAY FROM concat( '@startMonth', '-01' ))< 11, '0', '' ),
+			EXTRACT(
+			DAY 
+			FROM
+			concat( '@startMonth', '-01' )),
+			'%' 
+		) 
+	) 
+```
+
+```
+select 
+a2.field_4 AS 'huoHao',
+(select sum(b1.end_qty) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+)) AS 'startQty',
+(select sum(b1.end_qty*a1.item_cost) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+)) AS 'startAmount',
+((select sum(b1.end_qty*a1.item_cost) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+))
+/
+(select sum(b1.end_qty) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+))) AS 'startPrice',
+sum(a4.pur_qty) AS 'jinHuoQty',
+sum(a4.amount) AS 'jinHuoAmount',
+ifnull(sum(a4.amount)/sum(a4.pur_qty),0) AS 'jinHuoPrice',
+(select ifnull(sum(b2.pur_qty)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'JinHuoTuiQty',
+(select ifnull(sum(b2.amount)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'JinHuoTuiAmount',
+(select ifnull(sum(b2.amount)/sum(b2.pur_qty),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'JinHuoTuiPrice',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'xiaoShouQty',
+((select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)
++
+(select ifnull(sum(b2.cost_amount),0) from fin_cst_pac_update b1 left join fin_cst_pac_update_goods b2 on b1.id=b2.bill_id where b1.base_company_id=a1.base_company_id 
+and b2.goods_id=a2.goods_id and b1.bill_type in ('1C') and b1.bill_status in ('03') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))))'xiaoShouAmount',
+(((select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)
++
+(select ifnull(sum(b2.cost_amount),0) from fin_cst_pac_update b1 left join fin_cst_pac_update_goods b2 on b1.id=b2.bill_id where b1.base_company_id=a1.base_company_id 
+and b2.goods_id=a2.goods_id and b1.bill_type in ('1C') and b1.bill_status in ('03') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))))
+/
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)) AS 'xiaoShouPrice',
+0 AS 'keTuiHuoQty',
+0 AS 'KeTuiHuoAmount',
+0 AS 'KeTuiHuoPrice',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('86') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'diaoBoChuQty',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('85') and b1.goods_id=a2.goods_id
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))) AS 'diaoBoRuRuQty',
+((select ifnull(sum(b1.item_value),0) from fin_cst_pac_item_costs b1 where b1.goods_id =a1.goods_id AND (b1.base_company_id IN ('@companyId') OR '@companyId'='@')
+and b1.period_end_date like (select concat('%',EXTRACT(year from concat('@endMonth','-31')),'-',if(EXTRACT(month from concat('@endMonth','-31'))<11,'0',''),EXTRACT(month from concat('@endMonth','-31'))-1,'-',if(EXTRACT(day from concat('@endMonth','-31'))<11,'0',''),EXTRACT(day from concat('@endMonth','-31')),'%')
+))
+-((select sum(b1.end_qty*a1.item_cost) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+))
++(select ifnull(sum(b2.amount)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
++(select ifnull(sum(b2.amount)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
+-((select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)
++
+(select ifnull(sum(b2.cost_amount),0) from fin_cst_pac_update b1 left join fin_cst_pac_update_goods b2 on b1.id=b2.bill_id where b1.base_company_id=a1.base_company_id 
+and b2.goods_id=a2.goods_id and b1.bill_type in ('1C') and b1.bill_status in ('03') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))))
++0
++(select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+))) AS 'diaoBoAmount',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'yingKuiQty',
+(select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'yingKuiAmount',
+((select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)
+/
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)) AS 'yinKuiPrice',
+((select sum(b1.end_qty) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+))
++sum(a4.pur_qty)
++(select ifnull(sum(b2.pur_qty)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
+-(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
+-(select ifnull(sum(b2.sale_qty),0) from trade_sale_bill b1 left join trade_sale_bill_line b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status in ('05') and b1.sale_method in ('C') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
++(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
+-(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('86') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
++(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('85') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+and b1.stock_date between concat('2021-08','-01') and concat('2021-09','-31'))) AS 'endQty',
+(select ifnull(sum(b2.sale_qty),0) from trade_sale_bill b1 left join trade_sale_bill_line b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status in ('05') and b1.sale_method in ('C') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))'changeQty',
+(select ifnull(sum(b1.item_value),0) from fin_cst_pac_item_costs b1 where b1.goods_id =a1.goods_id and b1.base_company_id ='599969328820965436' 
+and b1.period_end_date like 
+(select concat('%',EXTRACT(year from concat('@endMonth','-31')),'-',if(EXTRACT(month from concat('@endMonth','-31'))<11,'0',''),EXTRACT(month from concat('@endMonth','-31'))-1,'-',if(EXTRACT(day from concat('@endMonth','-31'))<11,'0',''),EXTRACT(day from concat('@endMonth','-31')),'%')
+)) AS 'endAmount'
+FROM fin_cst_pac_item_costs a1 
+left join gds_goods_base_attribute a2 on a1.goods_id=a2.goods_id
+left join trade_purchase_bill a3 on a1.base_company_id = a3.base_company_id
+left join trade_purchase_bill_goods a4 on a4.bill_id = a3.id
+where
+a3.bill_status = '03'
+and a1.goods_id=a4.goods_id
+AND (a1.base_company_id IN ('@companyId') OR '@companyId'='@')
+and a1.period_start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%') )
+group by a2.field_4
+```
+
+```
+select 
+a2.field_4 AS 'huoHao',
+(select sum(b1.end_qty) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+)) AS 'startQty',
+(select sum(b1.end_qty*a1.item_cost) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+)) AS 'startAmount',
+((select sum(b1.end_qty*a1.item_cost) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+))
+/
+(select sum(b1.end_qty) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+))) AS 'startPrice',
+sum(a4.pur_qty) AS 'jinHuoQty',
+sum(a4.amount) AS 'jinHuoAmount',
+ifnull(sum(a4.amount)/sum(a4.pur_qty),0) AS 'jinHuoPrice',
+(select ifnull(sum(b2.pur_qty)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'JinHuoTuiQty',
+(select ifnull(sum(b2.amount)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'JinHuoTuiAmount',
+(select ifnull(sum(b2.amount)/sum(b2.pur_qty),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'JinHuoTuiPrice',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'xiaoShouQty',
+((select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)
++
+(select ifnull(sum(b2.cost_amount),0) from fin_cst_pac_update b1 left join fin_cst_pac_update_goods b2 on b1.id=b2.bill_id where b1.base_company_id=a1.base_company_id 
+and b2.goods_id=a2.goods_id and b1.bill_type in ('1C') and b1.bill_status in ('03') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))))'xiaoShouAmount',
+(((select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)
++
+(select ifnull(sum(b2.cost_amount),0) from fin_cst_pac_update b1 left join fin_cst_pac_update_goods b2 on b1.id=b2.bill_id where b1.base_company_id=a1.base_company_id 
+and b2.goods_id=a2.goods_id and b1.bill_type in ('1C') and b1.bill_status in ('03') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))))
+/
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)) AS 'xiaoShouPrice',
+0 AS 'keTuiHuoQty',
+0 AS 'KeTuiHuoAmount',
+0 AS 'KeTuiHuoPrice',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('86') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'diaoBoChuQty',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('85') and b1.goods_id=a2.goods_id
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))) AS 'diaoBoRuRuQty',
+((select ifnull(sum(b1.item_value),0) from fin_cst_pac_item_costs b1 where b1.goods_id =a1.goods_id AND (b1.base_company_id IN ('@companyId') OR '@companyId'='@')
+and b1.period_end_date like (select concat('%',EXTRACT(year from concat('@endMonth','-31')),'-',if(EXTRACT(month from concat('@endMonth','-31'))<11,'0',''),EXTRACT(month from concat('@endMonth','-31'))-1,'-',if(EXTRACT(day from concat('@endMonth','-31'))<11,'0',''),EXTRACT(day from concat('@endMonth','-31')),'%')
+))
+-((select sum(b1.end_qty*a1.item_cost) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+))
++(select ifnull(sum(b2.amount)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
++(select ifnull(sum(b2.amount)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
+-((select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)
++
+(select ifnull(sum(b2.cost_amount),0) from fin_cst_pac_update b1 left join fin_cst_pac_update_goods b2 on b1.id=b2.bill_id where b1.base_company_id=a1.base_company_id 
+and b2.goods_id=a2.goods_id and b1.bill_type in ('1C') and b1.bill_status in ('03') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))))
++0
++(select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+))) AS 'diaoBoAmount',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'yingKuiQty',
+(select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+) AS 'yingKuiAmount',
+((select ifnull(sum(b1.amount),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)
+/
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)) AS 'yinKuiPrice',
+((select sum(b1.end_qty) from fin_stock_period_summary b1 where b1.base_company_id = a1.base_company_id and b1.goods_id= a2.goods_id and b1.start_date like (select concat('%',EXTRACT(year from concat('@startMonth','-01')),'-',if(EXTRACT(month from concat('@startMonth','-01'))<11,'0',''),EXTRACT(month from concat('@startMonth','-01'))-1,'-',if(EXTRACT(day from concat('@startMonth','-01'))<11,'0',''),EXTRACT(day from concat('@startMonth','-01')),'%')
+))
++sum(a4.pur_qty)
++(select ifnull(sum(b2.pur_qty)*(-1),0) from trade_purchase_return_bill b1 left join trade_purchase_return_bill_goods b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status='03' and b2.goods_id=a2.goods_id and b1.pur_method='P' 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
+-(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.bill_name in ('76','77') and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.goods_id = a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
+-(select ifnull(sum(b2.sale_qty),0) from trade_sale_bill b1 left join trade_sale_bill_line b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status in ('05') and b1.sale_method in ('C') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
++(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('1D') and b1.bill_type in ('91') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
+-(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('86') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))
++(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 inner join bas_stock_organization b2 on b1.stock_organization_id = b2.id 
+where b2.accounting_company_id=a1.base_company_id and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.bill_name in ('85') and b1.goods_id=a2.goods_id 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31'))
+)) AS 'endQty',
+(select ifnull(sum(b2.sale_qty),0) from trade_sale_bill b1 left join trade_sale_bill_line b2 on b1.id=b2.bill_id 
+where b1.base_company_id=a1.base_company_id and b1.bill_status in ('05') and b1.sale_method in ('C') 
+AND (b1.stock_date BETWEEN concat('@startMonth','-01') AND concat('@endMonth','-31')))'changeQty',
+(select ifnull(sum(b1.item_value),0) from fin_cst_pac_item_costs b1 where b1.goods_id =a1.goods_id and b1.base_company_id ='599969328820965436' 
+and b1.period_end_date like 
+(select concat('%',EXTRACT(year from concat('@endMonth','-31')),'-',if(EXTRACT(month from concat('@endMonth','-31'))<11,'0',''),EXTRACT(month from concat('@endMonth','-31'))-1,'-',if(EXTRACT(day from concat('@endMonth','-31'))<11,'0',''),EXTRACT(day from concat('@endMonth','-31')),'%')
+)) AS 'endAmount'
+FROM fin_cst_pac_item_costs a1 
+left join gds_goods_base_attribute a2 on a1.goods_id=a2.goods_id
+left join trade_purchase_bill a3 on a1.base_company_id = a3.base_company_id
+left join trade_purchase_bill_goods a4 on a4.bill_id = a3.id
+where
+a3.bill_status = '03'
+and a1.goods_id=a4.goods_id
+AND (a1.base_company_id IN ('@companyId') OR '@companyId'='@')
+and a1.period_start_date BETWEEN concat( '@startMonth', '-01' ) 
+AND concat( '@endMonth', '-31' ) 
+group by a2.field_4
+```
+

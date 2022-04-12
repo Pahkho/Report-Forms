@@ -1,0 +1,12 @@
+大约625行左右 endQty列名
+
+有重复查询条件
+
+最后修改为		
+
+```
+(
+				b1.stock_date BETWEEN concat( '2022-02', '-01' ) 
+			AND concat( '2022-05', '-31' )) 
+		)) AS 'endQty',
+```

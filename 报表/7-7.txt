@@ -1,0 +1,132 @@
+1
+
+![image-20220401153405633](D:\Desktop\7-7.assets\image-20220401153405633.png)
+
+2
+
+![image-20220401153439027](D:\Desktop\7-7.assets\image-20220401153439027.png)
+
+3
+
+![image-20220401153534700](D:\Desktop\7-7.assets\image-20220401153534700.png)
+
+
+
+
+
+```
+0 AS qcsl,
+0 AS qcje,
+0 as bcjhsl,
+0 as bcjhje,
+0 as bcthsl,
+0 as bcthje,
+0 as bcxssl,
+0 as bcxsje,
+0 as bqhhsl,
+0 as bqhhje,
+0 as bcyksl,
+0 as bcykje,
+0 as nbdbdcsl,
+0 as nbdbdrsl
+```
+
+
+
+第二层原始
+
+```
+SELECT project.name,a.billNo,IFNULL(a.monthPositiveTaxInclusive,0) AS monthPositiveTaxInclusive,IFNULL(b.positiveCostMoney,0) AS positiveCostMoney,
+IFNULL(IFNULL(a.monthPositiveTaxInclusive,0)-IFNULL(b.positiveCostMoney,0),0) AS positiveGrossMargin,
+IFNULL(IFNULL(IFNULL(a.monthPositiveTaxInclusive,0)-IFNULL(b.positiveCostMoney,0),0)/IFNULL(a.monthPositiveTaxInclusive,0),0) AS positiveGrossProfitRate,
+0 AS classMarket,0 AS classCostMoney,0 AS dClassGrossMargin,0 AS dClassGrossProfitRate,0 AS bestSellerMarket,0 AS bestSellerCostMoney,
+0 AS bestSellerMargin,0 AS bestSellerMarginRate
+FROM 
+(SELECT IFNULL(SUM(monthPositiveTaxInclusive),0) AS monthPositiveTaxInclusive,project,billNo FROM 
+(SELECT amount AS monthPositiveTaxInclusive,business_party_id AS project,bill_no AS billNo FROM stk_stock_logic_workflow WHERE bill_name IN ('71','77') AND sales_item_id = '12' AND 
+IF('${startDate}' = '',1=1, stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.goods_price AS monthPositiveTaxInclusive,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_sale_bill_line a LEFT JOIN drp_cons_sale_bill b ON a.cons_sale_bill_id = b.id 
+WHERE b.sale_project_id = '12' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.goods_price AS monthPositiveTaxInclusive,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_return_bill_line a LEFT JOIN drp_cons_return_bill b ON a.cons_sale_return_bill_id = b.id 
+WHERE b.sale_project_id = '12' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.settle_amount AS monthPositiveTaxInclusive,b.`shop_id` AS project,b.bill_no AS billNo FROM trade_retail_bill_payment a LEFT JOIN trade_retail_bill b ON a.bill_id = b.id 
+WHERE b.sale_project_id = '12' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.settle_amount AS monthPositiveTaxInclusive,b.`shop_id` AS project,b.bill_no AS billNo FROM trade_retail_return_bill_payment a LEFT JOIN trade_retail_return_bill b ON a.bill_id = b.id 
+WHERE b.sale_project_id = '12' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+) a GROUP BY billNo ) a 
+LEFT JOIN 
+(SELECT SUM(positiveCostMoney) AS positiveCostMoney,billNo FROM 
+(SELECT a.change_qty*b.item_cost AS positiveCostMoney,a.bill_no AS billNo FROM (SELECT * FROM stk_stock_logic_workflow WHERE 
+IF('${startDate}' = '',1=1, stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}')) ) a 
+LEFT JOIN (SELECT * FROM fin_cst_pac_item_costs WHERE 
+period_start_date LIKE '${startDate}%') b ON a.sku_id = b.sku_id AND a.owner_id = b.base_company_id 
+) b GROUP BY billNo ) b ON a.billNo = b.billNo 
+LEFT JOIN 
+(SELECT id,NAME FROM bas_customer UNION ALL SELECT id,NAME FROM bas_shop ) project ON project.id = a.project 
+UNION ALL
+SELECT project.name,c.billNo,0 AS monthPositiveTaxInclusive,0 AS positiveCostMoney,0 AS positiveGrossMargin,0 AS positiveGrossProfitRate,
+IFNULL(c.classMarket,0) AS classMarket,IFNULL(d.classCostMoney,0) AS classCostMoney,IFNULL(c.classMarket,0)-IFNULL(d.classCostMoney,0) AS dClassGrossMargin,
+IFNULL(IFNULL(IFNULL(c.classMarket,0)-IFNULL(d.classCostMoney,0),0)/IFNULL(c.classMarket,0),0) AS dClassGrossProfitRate,0 AS bestSellerMarket,
+0 AS bestSellerCostMoney,0 AS bestSellerMargin,0 AS bestSellerMarginRate
+FROM 
+(SELECT SUM(classMarket) AS classMarket,project,billNo FROM 
+(SELECT amount AS classMarket,business_party_id AS project,bill_no AS billNo FROM stk_stock_logic_workflow WHERE bill_name IN ('71','77') AND sales_item_id = '10029' AND 
+IF('${startDate}' = '',1=1, stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.goods_price AS classMarket,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_sale_bill_line a LEFT JOIN drp_cons_sale_bill b ON a.cons_sale_bill_id = b.id 
+WHERE b.sale_project_id = '10029' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.goods_price AS classMarket,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_return_bill_line a LEFT JOIN drp_cons_return_bill b ON a.cons_sale_return_bill_id = b.id 
+WHERE b.sale_project_id = '10029' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.settle_amount AS classMarket,b.`shop_id` AS project,a.bill_no AS billNo FROM trade_retail_bill_payment a LEFT JOIN trade_retail_bill b ON a.bill_id = b.id 
+WHERE b.sale_project_id = '10029' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.settle_amount AS classMarket,b.`shop_id` AS project,a.bill_no AS billNo FROM trade_retail_return_bill_payment a LEFT JOIN trade_retail_return_bill b ON a.bill_id = b.id 
+WHERE b.sale_project_id = '10029' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+) c GROUP BY billNo ) c 
+LEFT JOIN 
+(SELECT SUM(classCostMoney) AS classCostMoney,billNo FROM 
+(SELECT a.change_qty*b.item_cost AS classCostMoney,a.bill_no AS billNo FROM (SELECT * FROM stk_stock_logic_workflow WHERE stock_date LIKE '${startDate}%'
+AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))) a 
+LEFT JOIN (SELECT * FROM fin_cst_pac_item_costs WHERE period_start_date LIKE '${startDate}%') b ON a.sku_id = b.sku_id AND a.owner_id = b.base_company_id 
+) d GROUP BY billNo ) d ON c.billNo = d.billNo 
+LEFT JOIN 
+(SELECT id,NAME FROM bas_customer UNION ALL SELECT id,NAME FROM bas_shop ) project ON project.id = c.project 
+UNION ALL
+SELECT project.name,e.billNo,0 AS monthPositiveTaxInclusive,0 AS positiveCostMoney,
+0 AS positiveGrossMargin,0 AS positiveGrossProfitRate,0 AS classMarket,0 AS classCostMoney,0 AS dClassGrossMargin,
+0 AS dClassGrossProfitRate,IFNULL(e.bestSellerMarket,0) AS bestSellerMarket,
+IFNULL(f.bestSellerCostMoney,0) AS bestSellerCostMoney,IFNULL(e.bestSellerMarket,0)-IFNULL(f.bestSellerCostMoney,0) AS bestSellerMargin,
+IFNULL(IFNULL(IFNULL(e.bestSellerMarket,0)-IFNULL(f.bestSellerCostMoney,0),0)/IFNULL(e.bestSellerMarket,0),0) AS bestSellerMarginRate
+FROM 
+(SELECT SUM(bestSellerMarket) AS bestSellerMarket,project,billNo FROM 
+(SELECT amount AS bestSellerMarket,business_party_id AS project,bill_no AS billNo FROM stk_stock_logic_workflow WHERE bill_name IN ('71','77') AND sales_item_id = '10030' AND 
+IF('${startDate}' = '',1=1, stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.goods_price AS bestSellerMarket,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_sale_bill_line a LEFT JOIN drp_cons_sale_bill b ON a.cons_sale_bill_id = b.id 
+WHERE b.sale_project_id = '10030' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.goods_price AS bestSellerMarket,b.customer_id AS project,b.bill_no AS billNo FROM drp_cons_return_bill_line a LEFT JOIN drp_cons_return_bill b ON a.cons_sale_return_bill_id = b.id 
+WHERE b.sale_project_id = '10030' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.settle_amount AS bestSellerMarket,b.`shop_id` AS project,a.bill_no AS billNo FROM trade_retail_bill_payment a LEFT JOIN trade_retail_bill b ON a.bill_id = b.id 
+WHERE b.sale_project_id = '10030' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+UNION ALL
+SELECT a.settle_amount AS bestSellerMarket,b.`shop_id` AS project,a.bill_no AS billNo FROM trade_retail_return_bill_payment a LEFT JOIN trade_retail_return_bill b ON a.bill_id = b.id 
+WHERE b.sale_project_id = '10030' AND IF('${startDate}' = '',1=1, b.stock_date LIKE '${startDate}%') AND IF('${accountingCompanyId}' = '',1=1, b.base_company_id IN ('${accountingCompanyId}'))
+) e GROUP BY billNo ) e  
+LEFT JOIN 
+(SELECT SUM(bestSellerCostMoney) AS bestSellerCostMoney,billNo FROM 
+(SELECT a.change_qty*b.item_cost AS bestSellerCostMoney,a.bill_no AS billNo FROM (SELECT * FROM stk_stock_logic_workflow WHERE stock_date LIKE '${startDate}%'
+AND IF('${accountingCompanyId}' = '',1=1, owner_id IN ('${accountingCompanyId}'))) a LEFT JOIN (SELECT * FROM fin_cst_pac_item_costs WHERE 
+period_start_date LIKE '${startDate}%') b ON a.sku_id = b.sku_id AND a.owner_id = b.base_company_id
+) f GROUP BY billNo ) f ON e.billNo = f.billNo 
+LEFT JOIN 
+(SELECT id,NAME FROM bas_customer UNION ALL SELECT id,NAME FROM bas_shop ) project ON project.id = e.project 
+```
+

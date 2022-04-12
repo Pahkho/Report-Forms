@@ -1,0 +1,38 @@
+```sql
+-- 三级表 点击单位，按单据号汇总
+select 
+(select any_value(name) from sys_dict_detail where dict_id='10' and code=a1.bill_name)'name',
+a1.bill_no 'billNo',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 where b1.bill_no=a1.bill_no and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.change_qty>0 
+and b1.stock_date between concat('${startDate}','-01') and concat('${endDate}','-30')) 'jchange_qty',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 where b1.bill_no=a1.bill_no and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.change_qty<0 
+and b1.stock_date between concat('${startDate}','-01') and concat('${endDate}','-30')) 'dchange_qty'
+from stk_stock_logic_workflow a1 
+inner join bas_stock_organization a2 on a1.stock_organization_id = a2.id 
+where a2.accounting_company_id = '${companyIdOrShopId}' and a1.stock_date between concat('${startDate}','-01') and concat('${endDate}','-30')
+and a1.stock_type in ('1') and a1.qty_type in ('1')
+group by a1.bill_no
+union all
+-- 
+select 
+(select any_value(name) from sys_dict_detail where dict_id='9' and code=a1.bill_name)'name',
+a1.bill_no 'billNo',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 where b1.bill_no=a1.bill_no and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.change_qty>0 
+and b1.stock_date between concat('${startDate}','-01') and concat('${endDate}','-30')) 'jchange_qty',
+(select ifnull(sum(b1.change_qty),0) from stk_stock_logic_workflow b1 where b1.bill_no=a1.bill_no and b1.stock_type in ('1') and b1.qty_type in ('1') and b1.change_qty<0 
+and b1.stock_date between concat('${startDate}','-01') and concat('${endDate}','-30')) 'dchange_qty'
+from stk_stock_logic_workflow a1 
+inner join bas_shop_use_warehouse a2 on a1.logic_warehouse_id = a2.logic_warehouse_id 
+where a2.shop_id = '${companyIdOrShopId}' and a1.stock_date between concat('${startDate}','-01') and concat('${endDate}','-30')
+and a1.stock_type in ('1') and a1.qty_type in ('1')
+group by a1.bill_no
+```
+
+![image-20220324192345740](D:\Desktop\e3第三层.assets\image-20220324192345740.png)
+
+```
+2021-11
+10001
+2021-10
+```
+
